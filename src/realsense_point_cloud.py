@@ -1,20 +1,17 @@
 #!/usr/bin/python3.6
 import pyrealsense2 as rs
 import rospy
-import math as m
-import struct
-import time
 import cv2
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 
 # for point_cloud
 from sensor_msgs import point_cloud2
-from sensor_msgs.msg import PointCloud2, PointField, Image, CameraInfo
+from sensor_msgs.msg import PointCloud2, PointField, CameraInfo
 from std_msgs.msg import Header
 from pointcloud_fun import get_point_cloud, transform_point_cloud, create_PointCloud2, point_cloud_filtration
 
-# D435
+# D435 pipeline
 pipeline = rs.pipeline()
 config = rs.config()
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
@@ -38,11 +35,8 @@ colorizer = rs.colorizer()
 old_points = np.array([[0, 0, 0]]) 
 
 # Node init and publisher definition
-rospy.init_node('rgb_image', anonymous = True)
-pub_color = rospy.Publisher("realsense_rgb", Image, queue_size=2)
-pub_align = rospy.Publisher("realsense_align_depth", Image, queue_size=2)
+rospy.init_node('realsense_point_cloud', anonymous = True)
 pub_pointcloud = rospy.Publisher("point_cloud2", PointCloud2, queue_size=2)
-pub_camera_info = rospy.Publisher("camera_info", CameraInfo, queue_size=2)
 rate = rospy.Rate(30) # 30hz
 
 # get color camera data
@@ -75,25 +69,18 @@ while not rospy.is_shutdown():
     color_frame = frames.get_color_frame()
     depth_frame = frames.get_depth_frame()
 
-    # Publish color image
-    color_image = np.asanyarray(color_frame.get_data())
-    color_message = bridge.cv2_to_imgmsg(color_image, encoding="passthrough")
-    pub_color.publish(color_message)
-
     # Publish camera info
-    pub_camera_info.publish(camera_info)
+    #pub_camera_info.publish(camera_info)
 
     # Publish align dpth to color image
     aligned_frames = align.process(frames)
     aligned_depth_frame = aligned_frames.get_depth_frame()
     align_depth = np.asanyarray(aligned_depth_frame.get_data())
-    align_message = bridge.cv2_to_imgmsg(align_depth, encoding="passthrough")
-    pub_align.publish(align_message)
 
     # create point_cloud
     verts, _, color_image = get_point_cloud(depth_frame, color_frame, pc, decimate, colorizer)
     points = point_cloud_filtration(verts)
-    pc2, old_points = create_PointCloud2(points, old_points, color_image, align_depth)
+    pc2, old_points = create_PointCloud2(points, old_points, color_image)
     pub_pointcloud.publish(pc2)
 
     rate.sleep()

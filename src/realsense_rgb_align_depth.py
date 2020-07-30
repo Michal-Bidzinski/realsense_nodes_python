@@ -1,20 +1,14 @@
 #!/usr/bin/python3.6
 import pyrealsense2 as rs
 import rospy
-import math as m
-import struct
-import time
 import cv2
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 
 # for point_cloud
-from sensor_msgs import point_cloud2
-from sensor_msgs.msg import PointCloud2, PointField, Image, CameraInfo
-from std_msgs.msg import Header
+from sensor_msgs.msg import Image, CameraInfo
 
-
-# D435
+# D435 pipeline
 pipeline = rs.pipeline()
 config = rs.config()
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
@@ -31,9 +25,9 @@ align_to = rs.stream.color
 align = rs.align(align_to)
 
 # Node init and publisher definition
-rospy.init_node('rgb_image', anonymous = True)
-pub_color = rospy.Publisher("realsense_rgb", Image, queue_size=2)
-pub_align = rospy.Publisher("realsense_align_depth", Image, queue_size=2)
+rospy.init_node('realsense_rgb_align_depth', anonymous = True)
+pub_color = rospy.Publisher("rgb_image", Image, queue_size=2)
+pub_align = rospy.Publisher("align_depth", Image, queue_size=2)
 pub_camera_info = rospy.Publisher("camera_info", CameraInfo, queue_size=2)
 rate = rospy.Rate(30) # 30hz
 
