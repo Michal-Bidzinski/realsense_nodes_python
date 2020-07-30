@@ -34,4 +34,8 @@ Node to stream rgb image from usb camera (also Realsense D435).
 Published topics:
 - /usb_camera_image (sensor_msgs/Image)
 
+## Run nodes:
+source devel/setup.bash
+
+rosru realsense_nodes_python node_name.py
 
