@@ -4,6 +4,7 @@ import rospy
 import cv2
 import numpy as np
 import open3d as o3d
+import argparse
 
 # for trajectory 
 from geometry_msgs.msg import Pose, Point, Quaternion, Twist, PoseStamped
@@ -14,7 +15,7 @@ from trajectory_fun import get_path_position_orientation
 from sensor_msgs import point_cloud2
 from sensor_msgs.msg import PointCloud2, Image
 from std_msgs.msg import Header
-from pointcloud_fun import get_point_cloud, transform_point_cloud, create_PointCloud2
+from pointcloud_fun import get_point_cloud, transform_point_cloud, create_PointCloud2, point_cloud_filtration
 
 
 # D435 pipeline
@@ -57,6 +58,12 @@ decimate.set_option(rs.option.filter_magnitude, 2 ** 1)
 colorizer = rs.colorizer()
 old_points = np.array([[0, 0, 0]]) 
 
+# Arguments parser
+parser = argparse.ArgumentParser()
+parser.add_argument("--voxel_size", "-v", help="set voxel_size for filtration", type=float, default=0.01)
+
+args = parser.parse_args()
+
 
 print("Start node")
 
@@ -78,9 +85,10 @@ while not rospy.is_shutdown():
     pub_path.publish(my_path)
 
     # create point_cloud
-    verts, _, color_image = get_point_cloud(depth_frame, color_frame, pc, decimate, colorizer)
-    points = transform_point_cloud(verts, position, orientation)
-    pc2, old_points = create_PointCloud2(points, old_points, color_image)
+    _, _, points = get_point_cloud(depth_frame, color_frame, pc, decimate, colorizer)
+    points = transform_point_cloud(points, position, orientation)
+    points = point_cloud_filtration(points, args.voxel_size)
+    pc2 = create_PointCloud2(points)
     pub_pointcloud.publish(pc2)
 
     rate.sleep()

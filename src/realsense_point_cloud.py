@@ -3,6 +3,7 @@ import pyrealsense2 as rs
 import rospy
 import cv2
 import numpy as np
+import argparse
 from cv_bridge import CvBridge, CvBridgeError
 
 # for point_cloud
@@ -32,7 +33,6 @@ pc = rs.pointcloud()
 decimate = rs.decimation_filter()
 decimate.set_option(rs.option.filter_magnitude, 2 ** 1)
 colorizer = rs.colorizer()
-old_points = np.array([[0, 0, 0]]) 
 
 # Node init and publisher definition
 rospy.init_node('realsense_point_cloud', anonymous = True)
@@ -59,6 +59,12 @@ camera_info.P = [fx, 0, cx, 0, 0, fy, cy, 0, 0, 0, 1.0, 0]
 
 bridge = CvBridge()
 
+# Arguments parser
+parser = argparse.ArgumentParser()
+parser.add_argument("--voxel_size", "-v", help="set voxel_size for filtration", type=float, default=0.01)
+
+args = parser.parse_args()
+
 print("Start node")
 
 
@@ -78,9 +84,9 @@ while not rospy.is_shutdown():
     align_depth = np.asanyarray(aligned_depth_frame.get_data())
 
     # create point_cloud
-    verts, _, color_image = get_point_cloud(depth_frame, color_frame, pc, decimate, colorizer)
-    points = point_cloud_filtration(verts)
-    pc2, old_points = create_PointCloud2(points, old_points, color_image)
+    _, _, points = get_point_cloud(depth_frame, color_frame, pc, decimate, colorizer)
+    points = point_cloud_filtration(points, args.voxel_size)
+    pc2 = create_PointCloud2(points)
     pub_pointcloud.publish(pc2)
 
     rate.sleep()

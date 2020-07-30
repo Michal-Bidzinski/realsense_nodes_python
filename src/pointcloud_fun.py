@@ -1,4 +1,3 @@
-import math
 import time
 import cv2
 import numpy as np
@@ -35,34 +34,26 @@ def get_point_cloud(depth_frame, color_frame, pc, decimate, colorizer):
     verts = np.asanyarray(v).view(np.float32).reshape(-1, 3)  # xyz
     texcoords = np.asanyarray(t).view(np.float32).reshape(-1, 2)  # uv
 
-    return verts, texcoords, color_image
-
-def point_cloud_filtration(verts):
-    
     points = np.reshape(verts, (76800, 3))
-    points_2 = np.array([[0, 0, 0]])
-
+    #points_2 = np.array([[0, 0, 0]])
 
     points[:, [1, 2]] = points[:, [2, 1]] 
     points[:, [2]] *= -1.0
 
+    return verts, texcoords, points
+
+def point_cloud_filtration(points, voxel_size_arg):
+
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points)
-    downpcd = o3d.geometry.voxel_down_sample(pcd, voxel_size = 0.01)
+    downpcd = o3d.geometry.voxel_down_sample(pcd, voxel_size = voxel_size_arg)
     
     new_points = np.asarray(downpcd.points)    
 
     return new_points
 
 
-def transform_point_cloud(verts, position, orientation):
-
-    points = np.reshape(verts, (76800, 3))
-    points_2 = np.array([[0, 0, 0]])
-
-
-    points[:, [1, 2]] = points[:, [2, 1]] 
-    points[:, [2]] *= -1.0
+def transform_point_cloud(points, position, orientation):
 
     c = np.cos(orientation[0] * 3.14/180)
     s = np.sin(orientation[0] * 3.14/180)
@@ -91,23 +82,12 @@ def transform_point_cloud(verts, position, orientation):
 
     new_points[:, [0]] += position[0]
     new_points[:, [1]] += position[1]
-    new_points[:, [2]] += position[2]
-
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(new_points)
-    downpcd = o3d.geometry.voxel_down_sample(pcd, voxel_size = 0.01)
-    
-    new_points = np.asarray(downpcd.points)    
+    new_points[:, [2]] += position[2]   
 
     return new_points
 
-def create_PointCloud2(new_points, old_points, color_image):
-    points2 = []
+def create_PointCloud2(new_points):
 
-    # zwracanie nowej mapy punktów
-    return_points = new_points
-
-    # publikowanie chmury punktów
     x = new_points[:, 0]
     y = new_points[:, 1]
     z = new_points[:, 2]
@@ -130,4 +110,4 @@ def create_PointCloud2(new_points, old_points, color_image):
     pc2 = point_cloud2.create_cloud(header, fields, points2)
     pc2.header.stamp = rospy.Time.now()
 
-    return pc2, return_points
+    return pc2
