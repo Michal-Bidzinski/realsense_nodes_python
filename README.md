@@ -35,11 +35,11 @@ Published topics:
 - /usb_camera_image (sensor_msgs/Image)
 
 ## Run nodes:
+'''
 source devel/setup.bash
-
 rosrun realsense_node_python node_name.py
-
+'''
 When you run 'realsense_point_cloud' or 'realsense_point_cloud_trajectory', you can specify voxels size (default=0.01):
-
+'''
 rosrun realsense_node_python realsense_point_cloud.py --voxel_size 0.05
-
+'''
