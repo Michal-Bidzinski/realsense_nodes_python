@@ -37,5 +37,5 @@ Published topics:
 ## Run nodes:
 source devel/setup.bash
 
-rosru realsense_nodes_python node_name.py
+rosrun realsense_nodes_python node_name.py
 
