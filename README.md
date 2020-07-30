@@ -34,12 +34,21 @@ Node to stream rgb image from usb camera (also Realsense D435).
 Published topics:
 - /usb_camera_image (sensor_msgs/Image)
 
+# Build
+```
+mkdir -p catkin_ws_realsense/src
+cd catkin_ws_realsense/src
+git clone https://github.com/Michal-Bidzinski/realsense_nodes_python.git
+cd ..
+catkin_make
+```
+
 ## Run nodes:
-'''
+```
 source devel/setup.bash
 rosrun realsense_node_python node_name.py
-'''
+```
 When you run 'realsense_point_cloud' or 'realsense_point_cloud_trajectory', you can specify voxels size (default=0.01):
-'''
+```
 rosrun realsense_node_python realsense_point_cloud.py --voxel_size 0.05
-'''
+```
