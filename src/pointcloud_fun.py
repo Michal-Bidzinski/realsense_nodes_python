@@ -4,7 +4,8 @@ import numpy as np
 import pyrealsense2 as rs
 import rospy
 import struct
-import open3d as o3d
+import open3d
+
 
 from sensor_msgs import point_cloud2
 from sensor_msgs.msg import PointCloud2, PointField, Image
@@ -44,10 +45,11 @@ def get_point_cloud(depth_frame, color_frame, pc, decimate, colorizer):
 
 def point_cloud_filtration(points, voxel_size_arg):
 
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-    downpcd = o3d.geometry.voxel_down_sample(pcd, voxel_size = voxel_size_arg)
+    pcd = open3d.geometry.PointCloud()
+    pcd.points = open3d.utility.Vector3dVector(points)
     
+    downpcd = pcd.voxel_down_sample(voxel_size=voxel_size_arg)
+
     new_points = np.asarray(downpcd.points)    
 
     return new_points
