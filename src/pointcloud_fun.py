@@ -47,8 +47,8 @@ def point_cloud_filtration(points, voxel_size_arg):
 
     pcd = open3d.geometry.PointCloud()
     pcd.points = open3d.utility.Vector3dVector(points)
-    
     downpcd = pcd.voxel_down_sample(voxel_size=voxel_size_arg)
+    #downpcd = open3d.geometry.voxel_down_sample(pcd, voxel_size=voxel_size_arg)
 
     new_points = np.asarray(downpcd.points)    
 
