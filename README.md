@@ -33,6 +33,8 @@ Published topics:
 Node to stream rgb image from usb camera (also Realsense D435). 
 Published topics:
 - /usb_camera_image (sensor_msgs/Image)
+### triple_pointcloud
+Node to stream 3 aligned pointclouds. More info [here](https://github.com/jakubmuszynski/Multiple-Realsense-D435)
 
 # Build
 ```
