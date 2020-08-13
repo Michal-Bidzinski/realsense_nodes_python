@@ -13,7 +13,7 @@ from sensor_msgs.msg import PointCloud2, PointField, CameraInfo
 from std_msgs.msg import Header
 from pointcloud_fun import get_point_cloud, transform_point_cloud, point_cloud_filtration
 
-def create_PointCloud2_v2(new_points, cam_link):
+def create_PointCloud2_v2(new_points, cam_link, timestamp, sync):
 
     x = new_points[:, 0]
     y = new_points[:, 1]
@@ -35,7 +35,12 @@ def create_PointCloud2_v2(new_points, cam_link):
     header = Header()
     header.frame_id = cam_link
     pc2 = point_cloud2.create_cloud(header, fields, points2)
-    pc2.header.stamp = rospy.Time.now()
+    if sync:
+        t1 = (timestamp / 100000000)
+        t2 = (t1 - int(t1)) * 100000
+
+        time = rospy.Time(secs=int(t2), nsecs = int((t2 - int(t2))*100))
+        pc2.header.stamp = time
 
     return pc2
 
@@ -113,14 +118,17 @@ while not rospy.is_shutdown():
     frames_1 = pipeline_1.wait_for_frames()
     depth_frame_1 = frames_1.get_depth_frame()
     color_frame_1 = frames_1.get_color_frame()
+    timestamp_1 = frames_1.get_timestamp()
     # Get data from camera 2
     frames_2 = pipeline_2.wait_for_frames()
     depth_frame_2 = frames_2.get_depth_frame()
     color_frame_2 = frames_2.get_color_frame()
+    timestamp_2 = frames_2.get_timestamp()
     # Get data from camera 3
     frames_3 = pipeline_3.wait_for_frames()
     depth_frame_3 = frames_3.get_depth_frame()
     color_frame_3 = frames_3.get_color_frame()
+    timestamp_3 = frames_3.get_timestamp()
 
     # Publish align dpth to color image 1
     aligned_frames_1 = align_1.process(frames_1)
@@ -137,17 +145,17 @@ while not rospy.is_shutdown():
 
     _, _, points_1 = get_point_cloud(depth_frame_1, color_frame_1, pc_1, decimate_1, colorizer_1)
     points_1 = point_cloud_filtration(points_1, args.voxel_size)
-    pcv2_1 = create_PointCloud2_v2(points_1, 'cam_M_link')
+    pcv2_1 = create_PointCloud2_v2(points_1, 'cam_M_link', timestamp_1, True)
     pub_1.publish(pcv2_1)
 
     _, _, points_2 = get_point_cloud(depth_frame_2, color_frame_2, pc_2, decimate_2, colorizer_2)
     points_2 = point_cloud_filtration(points_2, args.voxel_size)
-    pcv2_2 = create_PointCloud2_v2(points_2, 'cam_R_link')
+    pcv2_2 = create_PointCloud2_v2(points_2, 'cam_R_link', timestamp_2, True)
     pub_2.publish(pcv2_2)
 
     _, _, points_3 = get_point_cloud(depth_frame_3, color_frame_3, pc_3, decimate_3, colorizer_3)
     points_3 = point_cloud_filtration(points_3, args.voxel_size)
-    pcv2_3 = create_PointCloud2_v2(points_3, 'cam_L_link')
+    pcv2_3 = create_PointCloud2_v2(points_3, 'cam_L_link', timestamp_3, True)
     pub_3.publish(pcv2_3)
 
     rate.sleep()
