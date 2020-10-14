@@ -36,7 +36,6 @@ def get_point_cloud(depth_frame, color_frame, pc, decimate, colorizer):
     texcoords = np.asanyarray(t).view(np.float32).reshape(-1, 2)  # uv
 
     points = np.reshape(verts, (76800, 3))
-    #points_2 = np.array([[0, 0, 0]])
 
     points[:, [1, 2]] = points[:, [2, 1]] 
     points[:, [2]] *= -1.0
@@ -108,6 +107,10 @@ def create_PointCloud2(new_points):
               ]
   
     header = Header()
+
+    ## Change the frame_id for your project if you need
+    ## Remember to keep the same frame_id across pointcloud_fun.py 
+    ## and realsense_rgb_depth_image_point_cloud.py
     header.frame_id = "map"
     pc2 = point_cloud2.create_cloud(header, fields, points2)
     pc2.header.stamp = rospy.Time.now()
