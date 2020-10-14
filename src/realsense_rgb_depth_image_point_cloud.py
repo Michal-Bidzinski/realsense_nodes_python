@@ -77,7 +77,17 @@ while not rospy.is_shutdown():
     frames = pipeline.wait_for_frames()
     color_frame = frames.get_color_frame()
     depth_frame = frames.get_depth_frame()
+    
+    timestamp = frames.get_timestamp()
 
+    t1 = (timestamp / 100000000)
+    t2 = (t1 - int(t1)) * 100000
+
+    #t1 = timestamp / 1000.0
+    time = rospy.Time(secs=int(t2), nsecs = int((t2 - int(t2))*100))
+
+    camera_info.header.stamp = time
+   
     # Publish camera info
     pub_camera_info.publish(camera_info)
 
@@ -91,11 +101,14 @@ while not rospy.is_shutdown():
     aligned_depth_frame = aligned_frames.get_depth_frame()
     align_depth = np.asanyarray(aligned_depth_frame.get_data())
     align_message = bridge.cv2_to_imgmsg(align_depth, encoding="passthrough")
+    align_message.header.stamp = time
+    align_message.header.frame_id = "map"
     pub_align.publish(align_message)
 
     # create point_cloud
     _, _, points = get_point_cloud(depth_frame, color_frame, pc, decimate, colorizer)
     points = point_cloud_filtration(points, args.voxel_size)
+
     pc2 = create_PointCloud2(points)
     pub_pointcloud.publish(pc2)
 
