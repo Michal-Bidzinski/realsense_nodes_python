@@ -5,29 +5,24 @@ import cv2
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 
-# for point_cloud
+# for image message
 from sensor_msgs.msg import Image, CameraInfo
+
 
 # D435 pipeline
 pipeline = rs.pipeline()
 config = rs.config()
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 
 # Start streaming
 pipeline.start(config)
 
 # Start streaming with requested config
-config.enable_record_to_file('test1.bag')
-
-# Align depth to color 
-align_to = rs.stream.color
-align = rs.align(align_to)
+#config.enable_record_to_file('test1.bag')
 
 # Node init and publisher definition
-rospy.init_node('realsense_rgb_align_depth', anonymous = True)
+rospy.init_node('realsense_rgb_image', anonymous = True)
 pub_color = rospy.Publisher("rgb_image", Image, queue_size=2)
-pub_align = rospy.Publisher("align_depth", Image, queue_size=2)
 pub_camera_info = rospy.Publisher("camera_info", CameraInfo, queue_size=2)
 rate = rospy.Rate(30) # 30hz
 
@@ -55,28 +50,25 @@ print("Start node")
 
 
 while not rospy.is_shutdown():
-    
+
     # Get data from cameras
     frames = pipeline.wait_for_frames()
     color_frame = frames.get_color_frame()
 
-    # Publish color image
+    # Convert color image
     color_image = np.asanyarray(color_frame.get_data())
-    color_message = bridge.cv2_to_imgmsg(color_image, encoding="passthrough")
+
+    # Rotate color image
+    rotated = cv2.rotate(color_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+    # Publish color image
+    color_message = bridge.cv2_to_imgmsg(rotated, encoding="passthrough")
     pub_color.publish(color_message)
 
     # Publish camera info
     pub_camera_info.publish(camera_info)
 
-    # Publish align depth to color image
-    aligned_frames = align.process(frames)
-    aligned_depth_frame = aligned_frames.get_depth_frame()
-    align_depth = np.asanyarray(aligned_depth_frame.get_data())
-    align_message = bridge.cv2_to_imgmsg(align_depth, encoding="passthrough")
-    pub_align.publish(align_message)
-
     rate.sleep()
 
 # Stop streaming
 pipeline.stop()
-
