@@ -12,29 +12,30 @@ from sensor_msgs.msg import PointCloud2, PointField, CameraInfo
 from std_msgs.msg import Header
 from pointcloud_fun import get_point_cloud, transform_point_cloud, create_PointCloud2, point_cloud_filtration
 
+from library.camera_functions import set_pipeline, record_rosbag, get_camera_info, use_CvBridge, image_CvBridge_conversion, set_pointcloud_variable
+
 
 class camera_D435():
     def __init__(self):
-        self.set_pipeline()
-        self.record_rosbag()
-        self.set_pointcloud_variable()
+        # D435 pipeline
+        self.pipeline, self.config = set_pipeline(["color", "depth"])
+
+        # Record rosbag
+        record_rosbag(self.config)
+
+        # variable for create and store pointcloud
+        self.pc, self.decimate, self.colorizer = set_pointcloud_variable()
+
+        # publisher definition
         self.set_publisher()
-        self.get_camera_info()
-        self.use_CvBridge()
+
+        # get camera info to publish 
+        self.camera_info = get_camera_info(self.pipeline)
+
+        # use CvBridge conversion for image
+        self.bridge = use_CvBridge()
+
         print("Start node")
-
-    # D435 pipeline
-    def set_pipeline(self):
-        self.pipeline = rs.pipeline()
-        self.config = rs.config()
-        self.config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-        self.config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-
-        # Start streaming
-        self.pipeline.start(self.config)
-
-    def record_rosbag(self):
-        self.config.enable_record_to_file('test1.bag')
 
     # variable for create and store pointcloud
     def set_pointcloud_variable(self):
@@ -47,29 +48,6 @@ class camera_D435():
     def set_publisher(self): 
         self.pub_pointcloud = rospy.Publisher("point_cloud2", PointCloud2, queue_size=2)
         self.pub_camera_info = rospy.Publisher("camera_info", CameraInfo, queue_size=2)
-
-    # get camera info to publish 
-    def get_camera_info(self):
-        profile = self.pipeline.get_active_profile()
-        color_profile = rs.video_stream_profile(profile.get_stream(rs.stream.color))
-        color_intrinsics = color_profile.get_intrinsics()
-
-        self.camera_info = CameraInfo()
-        self.camera_info.width = color_intrinsics.width
-        self.camera_info.height = color_intrinsics.height
-        self.camera_info.distortion_model = 'plumb_bob'
-        cx = color_intrinsics.ppx
-        cy = color_intrinsics.ppy
-        fx = color_intrinsics.fx
-        fy = color_intrinsics.fy
-        self.camera_info.K = [fx, 0, cx, 0, fy, cy, 0, 0, 1]
-        self.camera_info.D = [0, 0, 0, 0, 0]
-        self.camera_info.R = [1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0]
-        self.camera_info.P = [fx, 0, cx, 0, 0, fy, cy, 0, 0, 0, 1.0, 0]
-
-    # use CvBridge conversion for image
-    def use_CvBridge(self):
-        self.bridge = CvBridge()
 
     # camera callback
     def get_frame(self):

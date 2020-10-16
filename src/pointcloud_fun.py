@@ -87,7 +87,7 @@ def transform_point_cloud(points, position, orientation):
 
     return new_points
 
-def create_PointCloud2(new_points, timestamp):
+def create_PointCloud2(new_points, time):
 
     x = new_points[:, 0]
     y = new_points[:, 1]
@@ -114,9 +114,6 @@ def create_PointCloud2(new_points, timestamp):
     header.frame_id = "map"
     pc2 = point_cloud2.create_cloud(header, fields, points2)
     
-    t1 = (timestamp / 100000000)
-    t2 = (t1 - int(t1)) * 100000
-    time = rospy.Time(secs=int(t2), nsecs = int((t2 - int(t2))*100))
     pc2.header.stamp = time
 
     return pc2
