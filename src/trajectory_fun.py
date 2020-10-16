@@ -7,7 +7,7 @@ from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion
 from nav_msgs.msg import Path, Odometry
 
 
-def get_path_position_orientation(pose, my_path):
+def get_path_position_orientation(pose, my_path, timestamp):
     if pose:
         # Print some of the pose data to the terminal
         data = pose.get_pose_data()
@@ -34,6 +34,14 @@ def get_path_position_orientation(pose, my_path):
 
         pose.header.frame_id = '/odom'        
         pose.header.stamp = rospy.Time.now()
+
+        # count timestamp
+        t1 = (timestamp / 100000000)
+        t2 = (t1 - int(t1)) * 100000
+
+        time = rospy.Time(secs=int(t2), nsecs = int((t2 - int(t2))*100))
+
+
         my_path.poses.append(pose)
         position = [pose.pose.position.x, pose.pose.position.y, pose.pose.position.z]
         orientation = [pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z]
@@ -42,6 +50,7 @@ def get_path_position_orientation(pose, my_path):
 
         odom = Odometry()
         odom.header.frame_id = 'map'
+        odom.header.stamp = time
 
         odom.pose.pose.position.x = data.translation.x 
         odom.pose.pose.position.z = data.translation.y

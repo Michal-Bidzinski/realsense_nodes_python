@@ -46,8 +46,8 @@ def point_cloud_filtration(points, voxel_size_arg):
 
     pcd = open3d.geometry.PointCloud()
     pcd.points = open3d.utility.Vector3dVector(points)
-    downpcd = pcd.voxel_down_sample(voxel_size=voxel_size_arg)
-    #downpcd = open3d.geometry.voxel_down_sample(pcd, voxel_size=voxel_size_arg)
+    #downpcd = pcd.voxel_down_sample(voxel_size=voxel_size_arg)
+    downpcd = open3d.geometry.voxel_down_sample(pcd, voxel_size=voxel_size_arg)
 
     new_points = np.asarray(downpcd.points)    
 
@@ -87,7 +87,7 @@ def transform_point_cloud(points, position, orientation):
 
     return new_points
 
-def create_PointCloud2(new_points):
+def create_PointCloud2(new_points, timestamp):
 
     x = new_points[:, 0]
     y = new_points[:, 1]
@@ -113,6 +113,10 @@ def create_PointCloud2(new_points):
     ## and realsense_rgb_depth_image_point_cloud.py
     header.frame_id = "map"
     pc2 = point_cloud2.create_cloud(header, fields, points2)
-    pc2.header.stamp = rospy.Time.now()
+    
+    t1 = (timestamp / 100000000)
+    t2 = (t1 - int(t1)) * 100000
+    time = rospy.Time(secs=int(t2), nsecs = int((t2 - int(t2))*100))
+    pc2.header.stamp = time
 
     return pc2

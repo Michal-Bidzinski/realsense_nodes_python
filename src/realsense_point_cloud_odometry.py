@@ -4,96 +4,75 @@ import rospy
 import cv2
 import numpy as np
 import open3d as o3d
-import argparse
+import message_filters
+import math as m
 
 # for trajectory 
 from geometry_msgs.msg import Pose, Point, Quaternion, Twist, PoseStamped
 from nav_msgs.msg import Path
 from trajectory_fun import get_path_position_orientation
+from nav_msgs.msg import Odometry
 
 # for point_cloud
 from sensor_msgs import point_cloud2
-from sensor_msgs.msg import PointCloud2, Image
+from sensor_msgs.msg import PointCloud2, Image, PointField
 from std_msgs.msg import Header
 from pointcloud_fun import get_point_cloud, transform_point_cloud, create_PointCloud2, point_cloud_filtration
 
+class cameras_D435_T265():
+    def __init__(self):
+        self.set_publisher()
+        self.set_subscriber()
+        print("Start node")
 
-# D435 pipeline
-pipeline_point_cloud = rs.pipeline()
-config_point_cloud = rs.config()
-config_point_cloud.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-config_point_cloud.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+    # publisher definition
+    def set_publisher(self): 
+        self.pub_odom = rospy.Publisher('odom_t265_sync', Odometry, queue_size=20)
+        self.pub_pointcloud = rospy.Publisher("point_cloud2_sync", PointCloud2, queue_size=2)
 
-# T265 pipeline
-pipeline_trajectory = rs.pipeline()
-config_trajectory = rs.config()
-config_trajectory.enable_stream(rs.stream.pose)
-
-# Start streaming
-pipeline_point_cloud.start(config_point_cloud)
-pipeline_trajectory.start(config_trajectory)
-
-# Start streaming with requested config
-config_point_cloud.enable_record_to_file('test1.bag')
-config_trajectory.enable_record_to_file('test2.bag')
-
-# Align to depth 
-align_to = rs.stream.color
-align = rs.align(align_to)
-
-# Node init and publisher definition
-rospy.init_node('realsense_point_cloud_trajectory', anonymous = True)
-pub_path = rospy.Publisher("path", Path, queue_size = 100)
-pub_pointcloud = rospy.Publisher("point_cloud2", PointCloud2, queue_size=2)
-rate = rospy.Rate(30) # 30hz
-
-# init trajectory variables
-my_path = Path()
-my_path.header.frame_id = 'map'
-
-# Processing blocks
-pc = rs.pointcloud()
-decimate = rs.decimation_filter()
-decimate.set_option(rs.option.filter_magnitude, 2 ** 1)
-colorizer = rs.colorizer()
-old_points = np.array([[0, 0, 0]]) 
-
-# Arguments parser
-parser = argparse.ArgumentParser()
-parser.add_argument("--voxel_size", "-v", help="set voxel_size for filtration", type=float, default=0.01)
-
-args = parser.parse_args()
+    # publisher definition
+    def set_subscriber(self):
+        odometry = message_filters.Subscriber('odom_t265', Odometry)
+        point_cloud = message_filters.Subscriber('point_cloud2', PointCloud2)
+        ts = message_filters.ApproximateTimeSynchronizer([odometry, point_cloud], 2, 0.00000005,  allow_headerless=True)
+        ts.registerCallback(self.cameras_callback)
 
 
-print("Start node")
+    def cameras_callback(self, odom_msg, point_cloud2_msg):
+        timestamp_pc = point_cloud2_msg.header.stamp
+        timestamp_tr = odom_msg.header.stamp
+        print("PC: ", timestamp_pc, " TR: ", timestamp_tr, " difference: ", timestamp_tr - timestamp_pc)
+
+        self.point_cloud2_msg = point_cloud2_msg
+        self.odom_msg = odom_msg
+
+        self.point_cloud2_msg.header.stamp = rospy.Time()   
+        self.odom_msg.header.stamp = rospy.Time()  
+ 
+
+    # publish messages
+    def publish_data(self):
+        # Publish odom
+        self.pub_odom.publish(self.odom_msg)
+
+        # Publish camera info
+        self.pub_pointcloud.publish(self.point_cloud2_msg)
 
 
-while not rospy.is_shutdown():
+def main():
+
+    # node init
+    rospy.init_node('realsense_server', anonymous = True)
+    rate = rospy.Rate(30) # 30hz
+
+    rospy.loginfo("Realsense server is run")
+
+    # create camera object
+    cam_D435_T265 = cameras_D435_T265()
     
-    # Get data from cameras
-    frames = pipeline_point_cloud.wait_for_frames()
-    depth_frame = frames.get_depth_frame()
-    color_frame = frames.get_color_frame()
+    rospy.spin()
 
-    trajectory = pipeline_trajectory.wait_for_frames()
-    pose = trajectory.get_pose_frame()
 
-    # create path, get position and orientation
-    my_path, position, orientation, odom = get_path_position_orientation(pose, my_path)
-
-    #publish path
-    pub_path.publish(my_path)
-
-    # create point_cloud
-    _, _, points = get_point_cloud(depth_frame, color_frame, pc, decimate, colorizer)
-    points = transform_point_cloud(points, position, orientation)
-    points = point_cloud_filtration(points, args.voxel_size)
-    pc2 = create_PointCloud2(points)
-    pub_pointcloud.publish(pc2)
-
-    rate.sleep()
-
-# Stop streaming
-pipeline_point_cloud.stop()
-pipeline_trajectory.stop()
+if __name__ == '__main__':
+    main()
 

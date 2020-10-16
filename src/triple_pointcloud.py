@@ -103,7 +103,7 @@ decimate_3.set_option(rs.option.filter_magnitude, 2 ** 1)
 colorizer_3 = rs.colorizer()
 
 # Node init and publishers definitions
-rospy.init_node('pointcloud_merge', anonymous = True)
+rospy.init_node('triple_realsense_point_cloud', anonymous = True)
 pub_1 = rospy.Publisher("PointCloud_M", PointCloud2, queue_size=2)
 pub_2 = rospy.Publisher("PointCloud_R", PointCloud2, queue_size=2)
 pub_3 = rospy.Publisher("PointCloud_L", PointCloud2, queue_size=2)

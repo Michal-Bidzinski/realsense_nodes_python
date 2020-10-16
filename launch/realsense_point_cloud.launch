@@ -1,0 +1,6 @@
+<!-- 
+  Example launch file for octomap_server mapping:  
+-->
+<launch>
+	<node pkg="realsense_node_python" type="realsense_point_cloud.py"  name="realsense_point_cloud"/>
+</launch>

@@ -1,4 +1,6 @@
 # realsense_node_python
+Repository with ros node for use Intel Realsense camera: D414, D435, T265 and L515.
+
 
 ## Installation
 - librealsense https://github.com/IntelRealSense/librealsense
