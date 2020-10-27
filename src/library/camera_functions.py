@@ -35,7 +35,7 @@ def use_CvBridge():
 # get camera info to publish 
 def get_camera_info(pipeline):
     profile = pipeline.get_active_profile()
-    color_profile = rs.video_stream_profile(profile.get_stream(rs.stream.depth))
+    color_profile = rs.video_stream_profile(profile.get_stream(rs.stream.color))
     color_intrinsics = color_profile.get_intrinsics()
 
     camera_info = CameraInfo()

@@ -12,7 +12,7 @@ from sensor_msgs.msg import PointCloud2, PointField, CameraInfo
 from std_msgs.msg import Header
 from pointcloud_fun import get_point_cloud, transform_point_cloud, create_PointCloud2, point_cloud_filtration
 
-from library.camera_functions import set_pipeline, record_rosbag, get_camera_info, use_CvBridge, image_CvBridge_conversion, set_pointcloud_variable
+from library.camera_functions import set_pipeline, record_rosbag, get_camera_info, use_CvBridge, image_CvBridge_conversion, set_pointcloud_variable, get_timestamp
 
 
 class camera_D435():
@@ -57,6 +57,8 @@ class camera_D435():
         self.color_frame = frames.get_color_frame()
         self.depth_frame = frames.get_depth_frame()
 
+        self.time = get_timestamp(frames)
+
         self.create_point_cloud()
         self.publish_data()
 
@@ -73,7 +75,7 @@ class camera_D435():
     def create_point_cloud(self):
         _, _, points = get_point_cloud(self.depth_frame, self.color_frame, self.pc, self.decimate, self.colorizer)
         points = point_cloud_filtration(points, 0.01)
-        self.pc2 = create_PointCloud2(points, self.timestamp)
+        self.pc2 = create_PointCloud2(points, self.time)
 
     # stop streaming camera data
     def stop_streaming(self):
