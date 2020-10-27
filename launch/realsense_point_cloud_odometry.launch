@@ -3,4 +3,8 @@
 -->
 <launch>
 	<node pkg="realsense_node_python" type="realsense_point_cloud_odometry.py"  name="realsense_point_cloud_trajectory"/>
+
+	<node pkg="realsense_node_python" type="realsense_odometry.py" name="realsense_trajectory"/>
+
+	<node pkg="realsense_node_python" type="realsense_point_cloud.py"  name="realsense_point_cloud"/>
 </launch>
