@@ -2,9 +2,9 @@
   Example launch file for octomap_server mapping:  
 -->
 <launch>
-	<node pkg="realsense_node_python" type="realsense_point_cloud_odometry.py"  name="realsense_point_cloud_trajectory"/>
+	<node pkg="realsense_node_python" type="realsense_point_cloud_odometry.py"  name="realsense_point_cloud_trajectory" output="screen"/>
 
-	<node pkg="realsense_node_python" type="realsense_odometry.py" name="realsense_trajectory"/>
+	<node pkg="realsense_node_python" type="realsense_odometry.py" name="realsense_trajectory" output="screen"/>
 
-	<node pkg="realsense_node_python" type="realsense_point_cloud.py"  name="realsense_point_cloud"/>
+	<node pkg="realsense_node_python" type="realsense_point_cloud.py"  name="realsense_point_cloud" output="screen"/>
 </launch>

@@ -33,19 +33,23 @@ def use_CvBridge():
     return CvBridge()
 
 # get camera info to publish 
-def get_camera_info(pipeline):
+def get_camera_info(pipeline, array):
     profile = pipeline.get_active_profile()
-    color_profile = rs.video_stream_profile(profile.get_stream(rs.stream.color))
-    color_intrinsics = color_profile.get_intrinsics()
+    if "color" in array:
+        stream_profile = rs.video_stream_profile(profile.get_stream(rs.stream.color))
+        stream_intrinsics = stream_profile.get_intrinsics()
+    elif "depth" in array:
+        stream_profile = rs.video_stream_profile(profile.get_stream(rs.stream.depth))
+        stream_intrinsics = stream_profile.get_intrinsics()
 
     camera_info = CameraInfo()
-    camera_info.width = color_intrinsics.width
-    camera_info.height = color_intrinsics.height
+    camera_info.width = stream_intrinsics.width
+    camera_info.height = stream_intrinsics.height
     camera_info.distortion_model = 'plumb_bob'
-    cx = color_intrinsics.ppx
-    cy = color_intrinsics.ppy
-    fx = color_intrinsics.fx
-    fy = color_intrinsics.fy
+    cx = stream_intrinsics.ppx
+    cy = stream_intrinsics.ppy
+    fx = stream_intrinsics.fx
+    fy = stream_intrinsics.fy
     camera_info.K = [fx, 0, cx, 0, fy, cy, 0, 0, 1]
     camera_info.D = [0, 0, 0, 0, 0]
     camera_info.R = [1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0]

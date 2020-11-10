@@ -47,7 +47,9 @@ class cameras_D435_T265():
         self.odom_msg = odom_msg
 
         self.point_cloud2_msg.header.stamp = rospy.Time()   
-        self.odom_msg.header.stamp = rospy.Time()  
+        self.odom_msg.header.stamp = rospy.Time() 
+
+        self.publish_data() 
  
 
     # publish messages

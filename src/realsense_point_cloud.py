@@ -30,7 +30,7 @@ class camera_D435():
         self.set_publisher()
 
         # get camera info to publish 
-        self.camera_info = get_camera_info(self.pipeline)
+        self.camera_info = get_camera_info(self.pipeline, ["color", "depth"])
 
         # use CvBridge conversion for image
         self.bridge = use_CvBridge()
